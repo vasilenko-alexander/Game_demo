@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(Game_sound)
+project(Game_demo)
 
 set(CMAKE_CXX_STANDARD 11)
 set(HEADERS ${CMAKE_SOURCE_DIR}/src/headers)
@@ -8,7 +8,7 @@ set(PROJECT_LIBS_DIR ${CMAKE_SOURCE_DIR}/lib)
 set(SOURCES_DIR ${CMAKE_SOURCE_DIR}/src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_LIBS_DIR})
-file(GLOB SOURCES ${SOURCES_DIR}/game.cpp)
+set(SOURCES ${SOURCES_DIR}/app.cpp)
 
 file(GLOB LIB_SOURCES ${SOURCES_DIR}/engine.cpp
                       ${SOURCES_DIR}/matrix.cpp

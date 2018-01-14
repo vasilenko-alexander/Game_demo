@@ -90,6 +90,8 @@ int main(int /*argn*/, char* /*args*/ [])
                 case ge::events_t::pressed:
                     move   = move_to(event.key);
                     rotate = rotate_to(event.key);
+                    if (event.key == ge::keys::button1)
+                        player.play(ge::tank_shoot);
                     break;
                 default:
                     break;
