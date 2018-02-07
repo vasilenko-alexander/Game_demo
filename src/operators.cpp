@@ -52,6 +52,35 @@ namespace ge
         return res;
     }
 
+    matrix4 operator*(const matrix4& mat1, const matrix4& mat2)
+    {
+        matrix4 res;
+        for (size_t v_i = 0, max_i = 4; v_i < max_i; ++v_i)
+        {
+            res.data[v_i].x = mat1.data[v_i].x * mat2.data[0].x +
+                              mat1.data[v_i].y * mat2.data[1].x +
+                              mat1.data[v_i].z * mat2.data[2].x +
+                              mat1.data[v_i].w * mat2.data[3].x;
+
+            res.data[v_i].y = mat1.data[v_i].x * mat2.data[0].y +
+                              mat1.data[v_i].y * mat2.data[1].y +
+                              mat1.data[v_i].z * mat2.data[2].y +
+                              mat1.data[v_i].w * mat2.data[3].y;
+
+            res.data[v_i].z = mat1.data[v_i].x * mat2.data[0].z +
+                              mat1.data[v_i].y * mat2.data[1].z +
+                              mat1.data[v_i].z * mat2.data[2].z +
+                              mat1.data[v_i].w * mat2.data[3].z;
+
+            res.data[v_i].w = mat1.data[v_i].x * mat2.data[0].w +
+                              mat1.data[v_i].y * mat2.data[1].w +
+                              mat1.data[v_i].z * mat2.data[2].w +
+                              mat1.data[v_i].w * mat2.data[3].w;
+        }
+
+        return res;
+    }
+
     std::istream& operator>>(std::istream& is, texture& tx)
     {
         for (size_t i = 0; i < tx.tex_coords.size(); ++i)
@@ -81,5 +110,17 @@ namespace ge
     {
         return frst.freq != scnd.freq || frst.channels != scnd.channels ||
                frst.format != scnd.format;
+    }
+
+    vertex operator*(const vertex& in, const matrix4& transform)
+    {
+        vertex out;
+        out.x = in.x * transform.data[0].x + in.y * transform.data[1].x +
+                transform.data[3].x;
+
+        out.y = in.x * transform.data[0].y + in.y * transform.data[1].y +
+                transform.data[3].y;
+
+        return out;
     }
 }

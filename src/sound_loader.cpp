@@ -1,4 +1,5 @@
 #include "headers/sound_loader.hpp"
+#include "headers/engine_constants.hpp"
 #include "headers/sound_operators.hpp"
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -9,7 +10,6 @@
 
 namespace ge
 {
-    const std::string Sound_loader::config_path = "config/sound_config.txt";
 
     Sound_loader::Sound_loader()
     {
@@ -119,11 +119,11 @@ namespace ge
 
     void Sound_loader::load_sounds()
     {
-        std::ifstream config_file(config_path.c_str());
+        std::ifstream config_file(sound_config.c_str());
 
         if (!config_file.is_open())
         {
-            std::cerr << "Config file placed in " << config_path
+            std::cerr << "Config file placed in " << sound_config
                       << " can't be opened" << std::endl;
             return;
         }

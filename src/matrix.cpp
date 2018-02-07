@@ -59,4 +59,65 @@ namespace ge
     {
         this->data = mat.data;
     }
+
+    std::vector<float> matrix3::to_array() const
+    {
+        std::vector<float> mat_array;
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            mat_array.push_back(data[i].x);
+            mat_array.push_back(data[i].y);
+            mat_array.push_back(data[i].w);
+        }
+
+        return mat_array;
+    }
+
+    matrix4::matrix4()
+    {
+    }
+
+    matrix4::matrix4(const std::vector<vec4>& init_vec) : data(init_vec)
+    {
+    }
+
+    matrix4::matrix4(const matrix4& init_mat) : data(init_mat.data)
+    {
+    }
+
+    matrix4::matrix4(const matrix3& init_mat)
+    {
+        data[0] = vec4(init_mat.data[0]);
+        data[1] = vec4(init_mat.data[1]);
+        data[2] = vec4(0.f, 0.f, 1.f, 0.f);
+        data[3] = vec4(init_mat.data[2]);
+    }
+
+    void matrix4::operator=(const matrix4& mat)
+    {
+        this->data = mat.data;
+    }
+
+    matrix4 matrix4::indentity()
+    {
+        std::vector<vec4> init_vec = { vec4(1.f, 0.f, 0.f, 0.f),
+                                       vec4(0.f, 1.f, 0.f, 0.f),
+                                       vec4(0.f, 0.f, 1.f, 0.f),
+                                       vec4(0.f, 0.f, 0.f, 1.f) };
+        return matrix4(init_vec);
+    }
+
+    std::vector<float> matrix4::to_array() const
+    {
+        std::vector<float> mat_array;
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            mat_array.push_back(data[i].x);
+            mat_array.push_back(data[i].y);
+            mat_array.push_back(data[i].z);
+            mat_array.push_back(data[i].w);
+        }
+
+        return mat_array;
+    }
 }

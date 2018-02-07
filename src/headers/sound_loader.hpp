@@ -9,7 +9,6 @@ namespace ge
 {
     class Sound_loader
     {
-        static const std::string config_path;
         AudioDevice device;
         std::map<std::string, AudioObject*> sounds;
 

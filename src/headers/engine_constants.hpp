@@ -18,10 +18,7 @@ namespace ge
     DECL_STR_CONST(events)
     DECL_STR_CONST(haptic)
 
-    DECL_STR_CONST(background_music)
-    DECL_STR_CONST(tank_move)
-    DECL_STR_CONST(tank_shoot)
-    DECL_STR_CONST(tank_explotion)
+    const std::string sound_config = "config/sound_config.txt";
 }
 
 #undef DECL_STR_CONST

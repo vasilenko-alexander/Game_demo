@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include "headers/image_loader.hpp"
 #include "headers/shader_loader.hpp"
+#include "headers/sound_loader.hpp"
 #include <cassert>
 #include <fstream>
 #include <map>
@@ -68,6 +69,10 @@ namespace ge
         SDL_GLContext glContext = nullptr;
         ImageLoader img_loader;
         ShaderLoader shader_program;
+        Sound_loader sound_loader;
+        std::vector<GLuint> all_vbo;
+        const GLuint unbind_value = 0;
+        size_t buffer_shift       = 0;
 
         const std::map<std::string, uint> defined_options{
             { ge::timer, SDL_INIT_TIMER },
@@ -105,14 +110,16 @@ namespace ge
         std::string init_engine(std::string init_options) override;
         bool read_event(event& event) override;
         void uninit_engine() override;
-        void render(triangle& tr) override;
-        void render(texture& tx) override;
+        void add_to_buffer(texture& tx) override;
+        void draw_buffer() override;
         void swap_buffers() override;
         float get_time() override;
         triangle transform_triangle(const triangle& trSrc,
                                     const triangle& trDest,
                                     float alpha) override;
-        void draw_texture(const std::string& path) override;
+        void init_atlas(const std::string& path) override;
+        void play(const std::string& sound_name) override;
+        void stop(const std::string& sound_name) override;
 
     private:
         uint parse_wnd_options(std::string init_options);
@@ -299,6 +306,8 @@ namespace ge
             return errMsg.str();
         }
 
+        sound_loader.init();
+
         shader_program.init_program(vertex_shader_path, frag_shader_path);
 
         shader_program.use();
@@ -359,44 +368,8 @@ namespace ge
         return hasEvent;
     }
 
-    void Engine::render(triangle& tr)
+    void Engine::add_to_buffer(texture& tx)
     {
-
-        GLuint coordAttrID =
-            glGetAttribLocation(shader_program.get_program_id(), "coords");
-
-        GLuint vbo_name;
-        // generate name for VBO
-        glGenBuffers(1, &vbo_name);
-        GE_GL_CHECK();
-        // bind name
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_name);
-        GE_GL_CHECK();
-        // copy data to buffer under binding name
-        glBufferData(GL_ARRAY_BUFFER, sizeof(tr.v), &tr.v[0], GL_STATIC_DRAW);
-        GE_GL_CHECK();
-
-        int coord_count = 2;
-        glVertexAttribPointer(
-            coordAttrID, coord_count, GL_FLOAT, GL_FALSE, 0, nullptr);
-        GE_GL_CHECK();
-        glEnableVertexAttribArray(coordAttrID);
-        GE_GL_CHECK();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        GE_GL_CHECK();
-        // unbind VBO
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GE_GL_CHECK();
-    }
-
-    void Engine::render(texture& tx)
-    {
-        int coord_count = 2;
-        GLuint coord_id =
-            glGetAttribLocation(shader_program.get_program_id(), "coords");
-        GLuint tex_coord_id =
-            glGetAttribLocation(shader_program.get_program_id(), "tex_coords");
-
         GLuint buffer;
         glGenBuffers(1, &buffer);
         GE_GL_CHECK()
@@ -405,8 +378,6 @@ namespace ge
 
         glBufferData(GL_ARRAY_BUFFER, sizeof(tx), nullptr, GL_STATIC_DRAW);
         GE_GL_CHECK()
-#define BUFFER_OFFSET(x) ((char*)NULL + (x))
-
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(tx.coords), &tx.coords[0]);
         GE_GL_CHECK()
         glBufferSubData(GL_ARRAY_BUFFER,
@@ -415,22 +386,52 @@ namespace ge
                         &tx.tex_coords[0]);
         GE_GL_CHECK()
 
-        glVertexAttribPointer(coord_id, coord_count, GL_FLOAT, GL_FALSE, 0, 0);
-        GE_GL_CHECK()
-        glEnableVertexAttribArray(coord_id);
-        GE_GL_CHECK()
+        if (buffer_shift == 0)
+            buffer_shift = sizeof(tx.coords);
 
-        glVertexAttribPointer(tex_coord_id,
-                              coord_count,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0,
-                              BUFFER_OFFSET(sizeof(tx.coords)));
+        glBindBuffer(GL_ARRAY_BUFFER, unbind_value);
         GE_GL_CHECK()
-        glEnableVertexAttribArray(tex_coord_id);
-        GE_GL_CHECK()
+        all_vbo.push_back(buffer);
+    }
+
+    void Engine::draw_buffer()
+    {
+        int coord_count = 2;
+        GLuint coord_id =
+            glGetAttribLocation(shader_program.get_program_id(), "coords");
+        GLuint tex_coord_id =
+            glGetAttribLocation(shader_program.get_program_id(), "tex_coords");
+        size_t count = all_vbo.size();
+        for (size_t i = 0; i < count; ++i)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, all_vbo[i]);
+            GE_GL_CHECK()
+#define BUFFER_OFFSET(x) ((char*)NULL + (x))
+            glVertexAttribPointer(
+                coord_id, coord_count, GL_FLOAT, GL_FALSE, 0, 0);
+            GE_GL_CHECK()
+            glEnableVertexAttribArray(coord_id);
+            GE_GL_CHECK()
+
+            glVertexAttribPointer(tex_coord_id,
+                                  coord_count,
+                                  GL_FLOAT,
+                                  GL_FALSE,
+                                  0,
+                                  BUFFER_OFFSET(buffer_shift));
+            GE_GL_CHECK()
+            glEnableVertexAttribArray(tex_coord_id);
+            GE_GL_CHECK()
 #undef BUFFER_OFFSET
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            GE_GL_CHECK()
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, unbind_value);
+        GE_GL_CHECK()
+        glDeleteBuffers(count, &all_vbo[0]);
+        GE_GL_CHECK()
+        all_vbo.clear();
+        buffer_shift = 0;
     }
 
     void Engine::fill_background()
@@ -457,7 +458,7 @@ namespace ge
         SDL_Quit();
     }
 
-    void Engine::draw_texture(const std::string& path)
+    void Engine::init_atlas(const std::string& path)
     {
         unsigned long width  = 0;
         unsigned long height = 0;
@@ -474,13 +475,16 @@ namespace ge
 
         // tell which texture unit need using
         glActiveTexture(GL_TEXTURE0);
+        GE_GL_CHECK();
 
         // create empty texture object and bind it with name
         glBindTexture(GL_TEXTURE_2D, texName);
         GE_GL_CHECK();
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GE_GL_CHECK();
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GE_GL_CHECK();
 
         // copy data to GPU texture object
         GLint mip_level = 0;
@@ -504,6 +508,16 @@ namespace ge
 
         glUniform1i(location, text_unit);
         GE_GL_CHECK();
+    }
+
+    void Engine::play(const std::string& sound_name)
+    {
+        sound_loader.play(sound_name);
+    }
+
+    void Engine::stop(const std::string& sound_name)
+    {
+        sound_loader.stop(sound_name);
     }
 
     IEngine* getInstance()

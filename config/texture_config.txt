@@ -1,0 +1,5 @@
+textures/tanks.png 8 4
+0 0 3
+1 1 2
+2 6 0
+3 5 1

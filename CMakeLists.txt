@@ -8,7 +8,8 @@ set(PROJECT_LIBS_DIR ${CMAKE_SOURCE_DIR}/lib)
 set(SOURCES_DIR ${CMAKE_SOURCE_DIR}/src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_LIBS_DIR})
-set(SOURCES ${SOURCES_DIR}/app.cpp)
+file(GLOB SOURCES ${SOURCES_DIR}/app.cpp
+                  ${SOURCES_DIR}/game.cpp)
 
 file(GLOB LIB_SOURCES ${SOURCES_DIR}/engine.cpp
                       ${SOURCES_DIR}/matrix.cpp
